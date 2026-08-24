@@ -12,6 +12,25 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Verificar tamaño del HTML servido por doGet()
+        run: |
+          LIMITE=500000
+          TOTAL=0
+          for f in Index.html CSS.html JS.html; do
+            if [ -f "$f" ]; then
+              SIZE=$(stat -c%s "$f")
+              echo "  $f: $SIZE bytes"
+              TOTAL=$((TOTAL + SIZE))
+            fi
+          done
+          echo "Total combinado (Index.html + CSS.html + JS.html): $TOTAL bytes (límite seguro: $LIMITE bytes)"
+          if [ "$TOTAL" -gt "$LIMITE" ]; then
+            echo "::error::Despliegue detenido: Index.html + CSS.html + JS.html suman $TOTAL bytes, superando el límite seguro de $LIMITE bytes."
+            echo "::error::Apps Script trunca en silencio la página de doGet() cuando el HTML servido es demasiado grande — la app quedaría con la interfaz incompleta o en blanco, sin ningún error visible."
+            echo "::error::Solución: NO embebas contenido pesado (fotos, firmas, PDFs, base64) directo en Index.html/CSS.html/JS.html. Sírvelo bajo demanda con google.script.run desde el servidor (ver CLAUDE.md, sección 'Regla a seguir en este repo')."
+            exit 1
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
