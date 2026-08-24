@@ -18,13 +18,143 @@
 <button class="btn-salida" onclick="mostrarSalida()">Registro Salida</button>
 </div>
 
-<div id="contenido"></div>
+<div id="cardEntrada" class="card">
+
+<h2>Registro de Entrada</h2>
+
+<div class="form-grid">
+
+<div class="form-group">
+<label>Fecha</label>
+<input type="date" id="fecha">
+</div>
+
+<div class="form-group">
+<label>Hora Entrada</label>
+<input type="time" id="horaEntrada">
+</div>
+
+<div class="form-group">
+<label>Punto de Carga</label>
+<select id="puntoCarga">
+<option>PUNTO 1 (CARGADOR ELÉCTRICO)</option>
+<option>PUNTO 2 (TOMA ESPECIALIZADA)</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Bloque Horario</label>
+<select id="bloque">
+<option>BLOQUE A 5:00 AM - 9:00 AM</option>
+<option>BLOQUE B 9:30 AM - 1:30 PM</option>
+<option>BLOQUE C 2:00 PM - 6:00 PM</option>
+<option>BLOQUE D 6:30 PM - 10:30 PM</option>
+<option>BLOQUE E 11:00 PM - 4:30 AM</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Apartamento</label>
+<input id="apto">
+</div>
+
+<div class="form-group">
+<label>Placa Vehículo</label>
+<input id="placa">
+</div>
+
+<div class="form-group">
+<label>Nombre Residente</label>
+<input id="nombre">
+</div>
+
+<div class="form-group">
+<label>Cédula</label>
+<input id="cedula">
+</div>
+
+<div class="form-group">
+<label>Correo Residente</label>
+<input id="correoResidente" type="email">
+</div>
+
+<div class="form-group">
+<label>Lectura Inicial kWh</label>
+<input id="lecturaInicial" type="number" min="0" step="0.01">
+</div>
+
+<div class="form-group">
+<label>Foto Lectura Inicial</label>
+<input id="fotoInicial" type="file" accept="image/*" capture="environment">
+</div>
+
+<div class="form-group">
+<label>Nombre Vigilante</label>
+<input id="vigilante">
+</div>
+
+<div class="form-group full">
+<label>Observaciones</label>
+<textarea id="observaciones"></textarea>
+</div>
+
+</div>
+
+<h3>Firmas de Autorización</h3>
+
+<div class="form-grid">
+
+<div class="canvas-box">
+<label>Firma Vigilante</label>
+<canvas id="firmaVigilante"></canvas>
+<button type="button" onclick="limpiarFirma('vigilante')">Borrar Firma Vigilante</button>
+</div>
+
+<div class="canvas-box">
+<label>Firma Residente</label>
+<canvas id="firmaResidente"></canvas>
+<button type="button" onclick="limpiarFirma('residente')">Borrar Firma Residente</button>
+</div>
+
+</div>
+
+<button class="btn-guardar" id="btnGuardarEntrada" onclick="guardarEntrada()">Guardar Entrada</button>
+
+</div>
+
+<div id="cardSalida" class="card oculto">
+
+<h2>Registro de Salida</h2>
+
+<div class="form-group">
+<label>Vehículo en Carga</label>
+<select id="selectVehiculos">
+<option value="">Cargando vehículos...</option>
+</select>
+</div>
+
+<div class="form-group">
+<label>Hora Salida</label>
+<input type="time" id="horaSalida">
+</div>
+
+<div class="form-group">
+<label>Lectura Final kWh</label>
+<input type="number" id="lecturaFinal" min="0" step="0.01">
+</div>
+
+<div class="form-group">
+<label>Foto Lectura Final</label>
+<input id="fotoFinal" type="file" accept="image/*" capture="environment">
+</div>
+
+<button class="btn-guardar" id="btnRegistrarSalida" onclick="registrarSalida()">Registrar Salida</button>
+
+</div>
 
 </div>
 
 <?!= include('JS'); ?>
-
-<script>console.log("TEST_DIRECTO_FUNCIONA");</script>
 
 </body>
 
