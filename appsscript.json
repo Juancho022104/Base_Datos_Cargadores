@@ -1,15 +1,6 @@
 {
   "timeZone": "America/Bogota",
-  "dependencies": {
-    "libraries": [
-      {
-        "userSymbol": "Base_Datos_Cargadores",
-        "version": "49",
-        "libraryId": "1-xTTb9CmiKvgOQaJ-e5RkTkZo0aFacq8JcM8AHdeDOGfOwFFShqhOCzJ",
-        "developmentMode": false
-      }
-    ]
-  },
+  "dependencies": {},
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "webapp": {
