@@ -13,7 +13,7 @@ function mostrarEntrada() {
 
 <div class="card">
 
-<h2>🟢 Registro de Entrada</h2>
+<h2>Registro de Entrada</h2>
 
 <div class="form-grid">
 
@@ -100,18 +100,18 @@ function mostrarEntrada() {
 <div class="canvas-box">
 <label>Firma Vigilante</label>
 <canvas id="firmaVigilante"></canvas>
-<button type="button" onclick="limpiarFirma('vigilante')">🗑️ Borrar Firma Vigilante</button>
+<button type="button" onclick="limpiarFirma('vigilante')">Borrar Firma Vigilante</button>
 </div>
 
 <div class="canvas-box">
 <label>Firma Residente</label>
 <canvas id="firmaResidente"></canvas>
-<button type="button" onclick="limpiarFirma('residente')">🗑️ Borrar Firma Residente</button>
+<button type="button" onclick="limpiarFirma('residente')">Borrar Firma Residente</button>
 </div>
 
 </div>
 
-<button class="btn-guardar" id="btnGuardarEntrada" onclick="guardarEntrada()">💾 Guardar Entrada</button>
+<button class="btn-guardar" id="btnGuardarEntrada" onclick="guardarEntrada()">Guardar Entrada</button>
 
 </div>
 
@@ -130,7 +130,7 @@ function mostrarSalida() {
 
 <div class="card">
 
-<h2>🔴 Registro de Salida</h2>
+<h2>Registro de Salida</h2>
 
 <div class="form-group">
 <label>Vehículo en Carga</label>
@@ -154,7 +154,7 @@ function mostrarSalida() {
 <input id="fotoFinal" type="file" accept="image/*" capture="environment">
 </div>
 
-<button class="btn-guardar" id="btnRegistrarSalida" onclick="registrarSalida()">🔌 Registrar Salida</button>
+<button class="btn-guardar" id="btnRegistrarSalida" onclick="registrarSalida()">Registrar Salida</button>
 
 </div>
 
@@ -323,17 +323,17 @@ function guardarEntrada() {
       google.script.run
         .withSuccessHandler(function (res) {
           if (res.success) {
-            alert("✅ Entrada registrada correctamente");
+            alert(" Entrada registrada correctamente");
             mostrarSalida();
           } else {
             boton.disabled = false;
-            boton.textContent = "💾 Guardar Entrada";
+            boton.textContent = " Guardar Entrada";
             alert(res.mensaje);
           }
         })
         .withFailureHandler(function (error) {
           boton.disabled = false;
-          boton.textContent = "💾 Guardar Entrada";
+          boton.textContent = " Guardar Entrada";
           alert("Error guardando entrada: " + error.message);
         })
         .guardarEntrada(datosBase);
@@ -375,17 +375,17 @@ function registrarSalida() {
       google.script.run
         .withSuccessHandler(function (res) {
           if (res.success) {
-            alert("✅ Salida registrada correctamente\n\nConsumo: " + res.consumo + " kWh");
+            alert(" Salida registrada correctamente\n\nConsumo: " + res.consumo + " kWh");
             mostrarEntrada();
           } else {
             boton.disabled = false;
-            boton.textContent = "🔌 Registrar Salida";
+            boton.textContent = " Registrar Salida";
             alert(res.mensaje);
           }
         })
         .withFailureHandler(function (error) {
           boton.disabled = false;
-          boton.textContent = "🔌 Registrar Salida";
+          boton.textContent = " Registrar Salida";
           alert("Error registrando salida: " + error.message);
         })
         .registrarSalida(datos);
@@ -556,7 +556,7 @@ function comprimirImagen(archivo, anchoMaximo, calidad) {
         let ancho = img.width;
         let alto = img.height;
 
-        if (ancho > anchoMaximo) {
+        if (ancho >anchoMaximo) {
           alto = Math.round(alto * (anchoMaximo / ancho));
           ancho = anchoMaximo;
         }
