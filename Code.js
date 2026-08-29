@@ -22,7 +22,8 @@ const ENCABEZADOS_HOJA = [
   "Lectura Inicial (kWh)", "Lectura Final (kWh)", "Consumo (kWh)",
   "Vigilante", "Hora Salida", "Correo Residente",
   "Foto Inicial (URL)", "Foto Final (URL)",
-  "Firma Vigilante (URL)", "Firma Residente (URL)", "Observaciones"
+  "Firma Vigilante (URL)", "Firma Residente (URL)", "Observaciones",
+  "Vigilante Salida"
 ];
 
 //======================================================
@@ -273,6 +274,10 @@ function registrarSalida(datos) {
       throw new Error("Ingrese la hora de salida.");
     }
 
+    if (!datos.vigilanteSalida) {
+      throw new Error("El nombre del vigilante de salida es obligatorio.");
+    }
+
     var hoja = obtenerHojaRegistro();
     var fila = Number(datos.fila);
 
@@ -307,10 +312,14 @@ function registrarSalida(datos) {
     // P URL Foto Final
     hoja.getRange(fila, 16).setValue(urlFotoFinal);
 
+    // T Vigilante Salida
+    hoja.getRange(fila, 20).setValue(datos.vigilanteSalida);
+
     registro.lecturaFinal = lecturaFinal;
     registro.consumo = consumo;
     registro.horaSalida = datos.horaSalida;
     registro.fotoFinal = urlFotoFinal;
+    registro.vigilanteSalida = datos.vigilanteSalida;
 
     // Recuperar las firmas originales (tomadas en la entrada) para el PDF de salida
     registro.firmaVigilante = obtenerImagenBase64Drive(registro.firmaVigilanteURL);
@@ -379,7 +388,7 @@ function buscarVehiculo(apto, placa) {
 
 function obtenerRegistro(fila) {
   var hoja = obtenerHojaRegistro();
-  var datos = hoja.getRange(fila, 1, 1, 19).getValues()[0];
+  var datos = hoja.getRange(fila, 1, 1, 20).getValues()[0];
 
   return {
     fecha: datos[0],
@@ -400,7 +409,8 @@ function obtenerRegistro(fila) {
     fotoFinal: datos[15],
     firmaVigilanteURL: datos[16],
     firmaResidenteURL: datos[17],
-    observaciones: datos[18] || ""
+    observaciones: datos[18] || "",
+    vigilanteSalida: datos[19] || ""
   };
 }
 
@@ -464,7 +474,8 @@ function enviarCorreoSalida(datos) {
       "<b>Residente:</b> " + datos.nombre + "<br>" +
       "<b>Hora salida:</b> " + datos.horaSalida + "<br>" +
       "<b>Lectura final:</b> " + datos.lecturaFinal + " kWh<br>" +
-      "<b>Consumo:</b> " + datos.consumo + " kWh",
+      "<b>Consumo:</b> " + datos.consumo + " kWh<br>" +
+      "<b>Vigilante salida:</b> " + datos.vigilanteSalida,
 
     attachments: archivos
   });
@@ -507,6 +518,7 @@ function crearPDFRegistro(tipo, datos) {
   html +=
     "<h3>Responsables</h3>" +
     "<p><b>Vigilante:</b> " + datos.vigilante + "</p>" +
+    (datos.vigilanteSalida ? "<p><b>Vigilante salida:</b> " + datos.vigilanteSalida + "</p>" : "") +
 
     "<h3>Firmas</h3>" +
     "<p>Firma Vigilante:</p>" +
