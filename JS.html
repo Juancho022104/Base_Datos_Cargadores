@@ -233,6 +233,7 @@ function registrarSalida() {
   let fila = document.getElementById("selectVehiculos").value;
   let lecturaFinal = document.getElementById("lecturaFinal").value;
   let horaSalida = document.getElementById("horaSalida").value;
+  let vigilanteSalida = document.getElementById("vigilanteSalida").value.trim();
 
   if (!fila) {
     alert("Seleccione un vehículo");
@@ -241,6 +242,11 @@ function registrarSalida() {
 
   if (lecturaFinal === "" || isNaN(Number(lecturaFinal)) || Number(lecturaFinal) < 0) {
     alert("Ingrese una lectura final válida");
+    return;
+  }
+
+  if (vigilanteSalida === "") {
+    alert("Ingrese nombre del vigilante");
     return;
   }
 
@@ -254,6 +260,7 @@ function registrarSalida() {
         fila: Number(fila),
         lecturaFinal: Number(lecturaFinal),
         horaSalida: horaSalida,
+        vigilanteSalida: vigilanteSalida,
         fotoFinal: foto
       };
 
@@ -285,6 +292,7 @@ function registrarSalida() {
 function resetFormularioSalida() {
   document.getElementById("lecturaFinal").value = "";
   document.getElementById("fotoFinal").value = "";
+  document.getElementById("vigilanteSalida").value = "";
 
   colocarHoraSalida();
 
