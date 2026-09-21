@@ -278,6 +278,10 @@ function registrarSalida(datos) {
       throw new Error("El nombre del vigilante de salida es obligatorio.");
     }
 
+    if (!datos.fotoFinal) {
+      throw new Error("La foto de la lectura final es obligatoria.");
+    }
+
     var hoja = obtenerHojaRegistro();
     var fila = Number(datos.fila);
 
@@ -585,6 +589,10 @@ function validarEntrada(datos) {
 
   if (datos.lecturaInicial === "" || datos.lecturaInicial === undefined || isNaN(Number(datos.lecturaInicial))) {
     throw new Error("La lectura inicial debe ser un número válido.");
+  }
+
+  if (!datos.fotoInicial) {
+    throw new Error("La foto de la lectura inicial es obligatoria.");
   }
 
   return true;

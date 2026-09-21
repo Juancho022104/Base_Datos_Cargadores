@@ -197,6 +197,12 @@ function guardarEntrada() {
     return;
   }
 
+  let fotoInicialInput = document.getElementById("fotoInicial");
+  if (!fotoInicialInput.files || fotoInicialInput.files.length === 0) {
+    alert("Adjunte la foto de la lectura inicial");
+    return;
+  }
+
   let boton = document.getElementById("btnGuardarEntrada");
   boton.disabled = true;
   boton.textContent = "Guardando...";
@@ -252,6 +258,12 @@ function registrarSalida() {
 
   if (vigilanteSalida === "") {
     alert("Ingrese nombre del vigilante");
+    return;
+  }
+
+  let fotoFinalInput = document.getElementById("fotoFinal");
+  if (!fotoFinalInput.files || fotoFinalInput.files.length === 0) {
+    alert("Adjunte la foto de la lectura final");
     return;
   }
 
