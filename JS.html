@@ -55,7 +55,12 @@ function mostrarSalida() {
 function colocarFechaHora() {
   let fecha = new Date();
 
-  document.getElementById("fecha").value = fecha.toISOString().substring(0, 10);
+  let fechaLocal =
+    fecha.getFullYear() + "-" +
+    String(fecha.getMonth() + 1).padStart(2, "0") + "-" +
+    String(fecha.getDate()).padStart(2, "0");
+
+  document.getElementById("fecha").value = fechaLocal;
 
   let hora =
     String(fecha.getHours()).padStart(2, "0") + ":" +
