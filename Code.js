@@ -497,12 +497,20 @@ function enviarCorreoSalida(datos) {
 
 var NOMBRE_PROP_COLA_TAREAS = "colaTareasPendientes";
 var NOMBRE_FUNCION_TAREAS = "procesarTareasEnSegundoPlano";
+var CACHE_TTL_TAREA_SEGUNDOS = 21600; // 6 horas (máximo permitido por CacheService)
+var MAX_INTENTOS_CORREO = 5;
 
 function encolarTareaEnSegundoPlano(tipo, datos) {
+  encolarTareaConReintento(tipo, datos, 1);
+}
+
+function encolarTareaConReintento(tipo, datos, intento) {
   var id = Utilities.getUuid();
 
   CacheService.getScriptCache().put(
-    "tarea_" + id, JSON.stringify({ tipo: tipo, datos: datos }), 600
+    "tarea_" + id,
+    JSON.stringify({ tipo: tipo, datos: datos, intento: intento }),
+    CACHE_TTL_TAREA_SEGUNDOS
   );
 
   var props = PropertiesService.getScriptProperties();
@@ -510,9 +518,16 @@ function encolarTareaEnSegundoPlano(tipo, datos) {
   cola.push(id);
   props.setProperty(NOMBRE_PROP_COLA_TAREAS, JSON.stringify(cola));
 
+  // Primer intento: casi inmediato. Reintentos: espera creciente (30s, 1, 2,
+  // 4 min...) con tope de 15 min, para darle tiempo a fallas transitorias
+  // (cuota de correo, timeout de red) a resolverse solas.
+  var retrasoMs = intento <= 1
+    ? 1000
+    : Math.min(30000 * Math.pow(2, intento - 2), 15 * 60 * 1000);
+
   ScriptApp.newTrigger(NOMBRE_FUNCION_TAREAS)
     .timeBased()
-    .after(1000)
+    .after(retrasoMs)
     .create();
 }
 
@@ -533,6 +548,8 @@ function procesarTareasEnSegundoPlano() {
     var raw = cache.get("tarea_" + id);
 
     if (!raw) {
+      // No debería pasar (TTL de 6h), pero si el dato ya expiró no hay
+      // forma de recuperarlo: no se puede reintentar algo que ya no existe.
       return;
     }
 
@@ -547,10 +564,46 @@ function procesarTareasEnSegundoPlano() {
         enviarCorreoSalida(tarea.datos);
       }
     } catch (error) {
-      // El registro ya quedó guardado en la hoja; si falla el envío del
-      // correo aquí, solo se pierde la notificación, no el dato.
+      manejarFalloEnvioCorreo(tarea, error);
     }
   });
+}
+
+//======================================================
+// REINTENTOS Y ALERTA DE RESPALDO SI EL CORREO SIGUE FALLANDO
+//======================================================
+
+function manejarFalloEnvioCorreo(tarea, error) {
+  var intentoActual = tarea.intento || 1;
+
+  if (intentoActual < MAX_INTENTOS_CORREO) {
+    encolarTareaConReintento(tarea.tipo, tarea.datos, intentoActual + 1);
+    return;
+  }
+
+  // Se agotaron los reintentos: se manda una alerta simple (sin PDF ni
+  // fotos adjuntas, para que no dependa de lo mismo que pudo estar
+  // fallando) al administrador, avisando que hay que revisar y reenviar
+  // el comprobante manualmente. El registro en la hoja nunca se pierde.
+  try {
+    MailApp.sendEmail({
+      to: CORREO_ADMIN,
+      subject: "FALLÓ el envío del comprobante - Apto " + tarea.datos.apto + " - " + tarea.datos.placa,
+      htmlBody:
+        "<h2>Aviso: no se pudo enviar el correo de confirmación</h2>" +
+        "<p>Tipo: " + (tarea.tipo === "entrada" ? "Inicio de carga" : "Finalización de carga") + "</p>" +
+        "<p><b>Apartamento:</b> " + tarea.datos.apto + "</p>" +
+        "<p><b>Placa:</b> " + tarea.datos.placa + "</p>" +
+        "<p>Se intentó " + MAX_INTENTOS_CORREO + " veces sin éxito. El registro SÍ quedó " +
+        "guardado correctamente en la hoja de cálculo; solo falló el envío del comprobante " +
+        "por correo. Revisar manualmente y reenviarlo si es necesario.</p>" +
+        "<p><b>Último error:</b> " + (error && error.message ? error.message : error) + "</p>"
+    });
+  } catch (errorAlerta) {
+    // Si ni siquiera esta alerta (la versión más simple posible del correo)
+    // se puede enviar, es una falla más de fondo (ej. cuota diaria de
+    // MailApp agotada) que no se puede resolver reintentando desde aquí.
+  }
 }
 
 function eliminarTriggersDe(nombreFuncion) {
