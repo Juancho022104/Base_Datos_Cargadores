@@ -185,15 +185,11 @@ function guardarEntrada(datos) {
       datos.fotoInicial, datos.apto, datos.placa, "Entrada_Foto"
     );
 
-    var urlFirmaVigilante = subirArchivoDrive(
-      datos.firmaVigilante, datos.apto, datos.placa, "Entrada_FirmaVigilante"
-    );
-
+    // La firma del vigilante ya no se sube a Drive: se guarda tal cual
+    // (base64) directo en la celda, ahorrando una llamada a Drive por registro.
     var urlFirmaResidente = subirArchivoDrive(
       datos.firmaResidente, datos.apto, datos.placa, "Entrada_FirmaResidente"
     );
-
-    datos.fotoInicial = urlFotoInicial;
 
     hoja.appendRow([
       datos.fecha,              // A
@@ -212,12 +208,16 @@ function guardarEntrada(datos) {
       datos.correoResidente,    // N
       urlFotoInicial,           // O
       "",                       // P Foto final
-      urlFirmaVigilante,        // Q
+      datos.firmaVigilante,     // Q (base64 directo, sin Drive)
       urlFirmaResidente,        // R
       datos.observaciones || "" // S
     ]);
 
-    enviarCorreoInicio(datos);
+    datos.fotoInicial = urlFotoInicial;
+
+    // El PDF y el correo de confirmación se generan en segundo plano
+    // (vía trigger), para no hacer esperar al usuario en el formulario.
+    encolarTareaEnSegundoPlano("entrada", datos);
 
     return {
       success: true,
@@ -325,11 +325,11 @@ function registrarSalida(datos) {
     registro.fotoFinal = urlFotoFinal;
     registro.vigilanteSalida = datos.vigilanteSalida;
 
-    // Recuperar las firmas originales (tomadas en la entrada) para el PDF de salida
-    registro.firmaVigilante = obtenerImagenBase64Drive(registro.firmaVigilanteURL);
-    registro.firmaResidente = obtenerImagenBase64Drive(registro.firmaResidenteURL);
-
-    enviarCorreoSalida(registro);
+    // El PDF y el correo de finalización se generan en segundo plano
+    // (vía trigger). Las firmas (vigilante en base64 directo, residente
+    // vía Drive) se recuperan dentro de enviarCorreoSalida en ese momento,
+    // no aquí, para no hacer esperar al usuario en el formulario.
+    encolarTareaEnSegundoPlano("salida", registro);
 
     return {
       success: true,
@@ -456,6 +456,11 @@ function enviarCorreoInicio(datos) {
 //======================================================
 
 function enviarCorreoSalida(datos) {
+  // La firma del vigilante ya viene en base64 directo desde la celda
+  // (columna "Firma Vigilante (URL)"); la del residente sigue en Drive.
+  datos.firmaVigilante = datos.firmaVigilanteURL;
+  datos.firmaResidente = obtenerImagenBase64Drive(datos.firmaResidenteURL);
+
   var pdf = crearPDFRegistro("Finalización de carga", datos);
   var archivos = [pdf];
 
@@ -482,6 +487,77 @@ function enviarCorreoSalida(datos) {
       "<b>Vigilante salida:</b> " + datos.vigilanteSalida,
 
     attachments: archivos
+  });
+}
+
+//======================================================
+// TAREAS EN SEGUNDO PLANO (PDF + correo, fuera de la
+// respuesta síncrona a google.script.run)
+//======================================================
+
+var NOMBRE_PROP_COLA_TAREAS = "colaTareasPendientes";
+var NOMBRE_FUNCION_TAREAS = "procesarTareasEnSegundoPlano";
+
+function encolarTareaEnSegundoPlano(tipo, datos) {
+  var id = Utilities.getUuid();
+
+  CacheService.getScriptCache().put(
+    "tarea_" + id, JSON.stringify({ tipo: tipo, datos: datos }), 600
+  );
+
+  var props = PropertiesService.getScriptProperties();
+  var cola = JSON.parse(props.getProperty(NOMBRE_PROP_COLA_TAREAS) || "[]");
+  cola.push(id);
+  props.setProperty(NOMBRE_PROP_COLA_TAREAS, JSON.stringify(cola));
+
+  ScriptApp.newTrigger(NOMBRE_FUNCION_TAREAS)
+    .timeBased()
+    .after(1000)
+    .create();
+}
+
+function procesarTareasEnSegundoPlano() {
+  eliminarTriggersDe(NOMBRE_FUNCION_TAREAS);
+
+  var props = PropertiesService.getScriptProperties();
+  var cache = CacheService.getScriptCache();
+  var cola = JSON.parse(props.getProperty(NOMBRE_PROP_COLA_TAREAS) || "[]");
+
+  if (cola.length === 0) {
+    return;
+  }
+
+  props.deleteProperty(NOMBRE_PROP_COLA_TAREAS);
+
+  cola.forEach(function (id) {
+    var raw = cache.get("tarea_" + id);
+
+    if (!raw) {
+      return;
+    }
+
+    cache.remove("tarea_" + id);
+
+    var tarea = JSON.parse(raw);
+
+    try {
+      if (tarea.tipo === "entrada") {
+        enviarCorreoInicio(tarea.datos);
+      } else if (tarea.tipo === "salida") {
+        enviarCorreoSalida(tarea.datos);
+      }
+    } catch (error) {
+      // El registro ya quedó guardado en la hoja; si falla el envío del
+      // correo aquí, solo se pierde la notificación, no el dato.
+    }
+  });
+}
+
+function eliminarTriggersDe(nombreFuncion) {
+  ScriptApp.getProjectTriggers().forEach(function (trigger) {
+    if (trigger.getHandlerFunction() === nombreFuncion) {
+      ScriptApp.deleteTrigger(trigger);
+    }
   });
 }
 
